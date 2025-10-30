@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://68wtcsg0-4000.inc1.devtunnels.ms';
+export const API_BASE_URL = 'http://161.118.181.8:80/api';
 
 export const DAILY_CREDITS = 10;
 
