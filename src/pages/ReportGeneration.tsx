@@ -10,6 +10,7 @@ import { useCredits } from '@/contexts/CreditContext';
 import { toast } from 'sonner';
 import { sanitizeInput } from '@/utils/formatters';
 import { apiService } from '@/services/api';
+import { generatePDFFromHTML } from '@/utils/pdfGenerator';
 
 export default function ReportGeneration() {
   const [companyName, setCompanyName] = useState('');
@@ -33,10 +34,15 @@ export default function ReportGeneration() {
     try {
       await deductCredit();
       
-      toast.info('Fetching data and generating PDF...');
+      toast.info('Fetching data and generating report...');
       
-      // Generate PDF using edge function
-      const blob = await apiService.generatePDF(sanitized);
+      // Get HTML from edge function
+      const { html } = await apiService.generatePDF(sanitized);
+      
+      toast.info('Creating PDF document...');
+      
+      // Convert HTML to PDF client-side
+      const blob = await generatePDFFromHTML(html, sanitized);
       
       // Download PDF
       const url = window.URL.createObjectURL(blob);

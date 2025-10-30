@@ -29,7 +29,7 @@ serve(async (req) => {
       throw new Error('Company name is required');
     }
 
-    // Generate comprehensive HTML report
+    // Return HTML content for client-side PDF generation
     const htmlContent = generateHTMLReport({
       companyName,
       bidsData,
@@ -40,32 +40,12 @@ serve(async (req) => {
       categories
     });
 
-    // Use Puppeteer to generate PDF
-    const pdfResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa('api:'),
-      },
-      body: JSON.stringify({
-        source: htmlContent,
-        landscape: false,
-        use_print: false,
-      }),
-    });
+    console.log('HTML report generated successfully');
 
-    if (!pdfResponse.ok) {
-      console.error('PDF generation failed:', await pdfResponse.text());
-      throw new Error('Failed to generate PDF');
-    }
-
-    const pdfBlob = await pdfResponse.arrayBuffer();
-
-    return new Response(pdfBlob, {
+    return new Response(JSON.stringify({ html: htmlContent }), {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${companyName}_Intelligence_Report.pdf"`,
+        'Content-Type': 'application/json',
       },
     });
 

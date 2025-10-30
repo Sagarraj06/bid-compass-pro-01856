@@ -154,8 +154,8 @@ export const apiService = {
     }
   },
 
-  // PDF Generation (server-side via Lovable Cloud)
-  generatePDF: async (companyName: string): Promise<Blob> => {
+  // PDF Generation via Lovable Cloud
+  generatePDF: async (companyName: string): Promise<{ html: string }> => {
     try {
       // Fetch all required data
       const [bidsData, departmentData, statesData, priceBandData, missedOpportunities, categories] = await Promise.all([
@@ -167,7 +167,7 @@ export const apiService = {
         apiService.getCategoryListing()
       ]);
 
-      // Call edge function to generate PDF
+      // Call edge function to generate HTML
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
         method: 'POST',
@@ -187,12 +187,12 @@ export const apiService = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to generate PDF');
+        throw new Error(errorData.error || 'Failed to generate report');
       }
 
-      return await response.blob();
+      return await response.json();
     } catch (error: any) {
-      console.error('Error generating PDF:', error);
+      console.error('Error generating report:', error);
       throw error;
     }
   }
