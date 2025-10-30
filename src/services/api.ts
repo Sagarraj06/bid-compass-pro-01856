@@ -154,14 +154,43 @@ export const apiService = {
     }
   },
 
-  // PDF Generation (server-side)
-  generatePDF: async (reportData: ReportPayload): Promise<Blob> => {
+  // PDF Generation (server-side via Lovable Cloud)
+  generatePDF: async (companyName: string): Promise<Blob> => {
     try {
-      const response = await apiClient.post('/api/reports/generate', reportData, {
-        responseType: 'blob',
-        timeout: 60000
+      // Fetch all required data
+      const [bidsData, departmentData, statesData, priceBandData, missedOpportunities, categories] = await Promise.all([
+        apiService.getBids(companyName),
+        apiService.getDepartments(),
+        apiService.getTopStates(),
+        apiService.getPriceBandAnalysis(companyName),
+        apiService.getMissedButWinnable(companyName, 5, 10),
+        apiService.getCategoryListing()
+      ]);
+
+      // Call edge function to generate PDF
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName,
+          bidsData,
+          departmentData,
+          statesData,
+          priceBandData,
+          missedOpportunities,
+          categories
+        })
       });
-      return response.data;
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate PDF');
+      }
+
+      return await response.blob();
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       throw error;

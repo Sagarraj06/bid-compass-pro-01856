@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useCredits } from '@/contexts/CreditContext';
 import { toast } from 'sonner';
 import { sanitizeInput } from '@/utils/formatters';
+import { apiService } from '@/services/api';
 
 export default function ReportGeneration() {
   const [companyName, setCompanyName] = useState('');
@@ -32,23 +33,24 @@ export default function ReportGeneration() {
     try {
       await deductCredit();
       
-      // Simulate PDF generation delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.info('Fetching data and generating PDF...');
       
-      toast.success('Report generated successfully! (PDF download will be available when backend is online)');
+      // Generate PDF using edge function
+      const blob = await apiService.generatePDF(sanitized);
       
-      // TODO: Implement actual PDF generation and download
-      // const blob = await apiService.generatePDF({ companyName: sanitized });
-      // const url = window.URL.createObjectURL(blob);
-      // const link = document.createElement('a');
-      // link.href = url;
-      // link.download = `${sanitized}_Intelligence_Report.pdf`;
-      // link.click();
-      // window.URL.revokeObjectURL(url);
+      // Download PDF
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${sanitized}_Intelligence_Report.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Report generated and downloaded successfully!');
       
     } catch (err: any) {
       console.error('Generation error:', err);
-      toast.error('Failed to generate report');
+      toast.error(err.message || 'Failed to generate report');
     } finally {
       setLoading(false);
     }

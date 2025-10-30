@@ -1,0 +1,4 @@
+project_id = "osrevskriduviecrbacz"
+
+[functions.generate-pdf]
+verify_jwt = false
